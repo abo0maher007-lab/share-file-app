@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "sdkVersion": "51.0.0",
     "android": {
       "package": "com.abomaher.sharefileapp",
       "permissions": [
@@ -19,7 +20,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "7184db86-fc09-4c0c-ae40-8032031fdfbb"
+        "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
       }
     }
   }
