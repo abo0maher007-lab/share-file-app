@@ -2,7 +2,7 @@
   "expo": {
     "name": "Share File App",
     "slug": "share-file-app",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "owner": "abo0maher007s-team",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -13,8 +13,12 @@
     },
     "android": {
       "package": "com.abomaher.sharefileapp",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "CHANGE_WIFI_STATE",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "READ_MEDIA_IMAGES",
@@ -34,6 +38,11 @@
     ],
     "extra": {
       "eas": {
+        "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
+      }
+    }
+  }
+}
         "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
       }
     }
