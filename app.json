@@ -1,19 +1,27 @@
 {
   "expo": {
-    "name": "Share File App",
-    "slug": "share-file-app",
-    "version": "1.2.0",
-    "owner": "abo0maher007s-team",
+    "name": "SHAREit Clone",
+    "slug": "shareit-clone",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "sdkVersion": "51.0.0",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#0B0F19",
-      "resizeMode": "contain"
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7C3AED"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.abomaher.sharefileapp",
-      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
@@ -31,10 +39,20 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "السماح للتطبيق بالوصول للصور لمشاركتها.",
-          "saveToPhotosPermission": "السماح بحفظ الصور المستلمة."
+          "photosPermission": "يحتاج التطبيق إذن الوصول للمعرض لإرسال واستقبال الصور والفيديوهات.",
+          "saveTemplate": "Save to Gallery",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "يحتاج التطبيق إذن الوصول للكاميرا لمسح رمز QR الخاص بالمستلم."
         }
       ]
+    ]
+  }
+}      ]
     ],
     "extra": {
       "eas": {
