@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Share File App",
+    "slug": "share-file-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.abo0maher007.sharefileapp",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CHANGE_WIFI_STATE",
+        "ACCESS_WIFI_STATE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Share File App to access your camera to scan QR codes."
