@@ -16,6 +16,11 @@
         "CHANGE_WIFI_STATE",
         "ACCESS_WIFI_STATE"
       ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7184db86-fc09-4c0c-ae40-8032031fdfbb"
+      }
     }
   }
 }
