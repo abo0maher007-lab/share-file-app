@@ -19,9 +19,18 @@
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
         "READ_MEDIA_AUDIO",
-        "QUERY_ALL_PACKAGES"
+        "CAMERA"
       ]
     },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "السماح للتطبيق بالوصول للصور لمشاركتها.",
+          "saveToPhotosPermission": "السماح بحفظ الصور المستلمة."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
