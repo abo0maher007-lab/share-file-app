@@ -15,26 +15,7 @@
       }
     }
   }
-}      [
-        "expo-camera",
-        {
-          "cameraPermission": "يحتاج التطبيق إذن الوصول للكاميرا لمسح رمز QR الخاص بالمستلم."
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
-      }
-    }
-  }
-}    },
-    "plugins": [
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "يحتاج التطبيق إذن الوصول للمعرض لإرسال واستقبال الصور والفيديوهات.",
-          "saveTemplate": "Save to Gallery",
+}          "saveTemplate": "Save to Gallery",
           "isAccessMediaLocationEnabled": true
         }
       ],
