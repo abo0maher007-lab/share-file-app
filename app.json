@@ -7,6 +7,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "sdkVersion": "51.0.0",
+    "splash": {
+      "backgroundColor": "#0B0F19",
+      "resizeMode": "contain"
+    },
     "android": {
       "package": "com.abomaher.sharefileapp"
     },
