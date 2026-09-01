@@ -2,7 +2,7 @@
   "expo": {
     "name": "Share File App",
     "slug": "share-file-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "owner": "abo0maher007s-team",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.abomaher.sharefileapp",
+      "versionCode": 2,
       "permissions": [
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
