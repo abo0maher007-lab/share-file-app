@@ -8,16 +8,7 @@
     "userInterfaceStyle": "dark",
     "sdkVersion": "51.0.0",
     "android": {
-      "package": "com.abomaher.sharefileapp",
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CHANGE_WIFI_STATE",
-        "ACCESS_WIFI_STATE"
-      ]
+      "package": "com.abomaher.sharefileapp"
     },
     "extra": {
       "eas": {
