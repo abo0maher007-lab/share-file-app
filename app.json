@@ -4,21 +4,8 @@
     "slug": "share-file-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0b0f19"
-    },
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0b0f19"
-      },
       "package": "com.abo0maher007.sharefileapp",
       "permissions": [
         "CAMERA",
@@ -26,7 +13,8 @@
         "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "NEARBY_WIFI_DEVICES"
+        "CHANGE_WIFI_STATE",
+        "ACCESS_WIFI_STATE"
       ]
     },
     "plugins": [
@@ -34,6 +22,11 @@
         "expo-camera",
         {
           "cameraPermission": "Allow Share File App to access your camera to scan QR codes."
+        }
+      ]
+    ]
+  }
+}
         }
       ]
     ]
