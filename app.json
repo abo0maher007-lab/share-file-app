@@ -1,40 +1,58 @@
 {
   "expo": {
-    "name": "Share File App",
+    "name": "SHAREit Clone",
     "slug": "share-file-app",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "android": {
-      "package": "com.abo0maher007.sharefileapp"
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0f172a"
     },
-    "extra": {
-      "eas": {
-        "projectId": "230928c9-fc29-4916-8951-73497313a265"
-      }
-    }
-  }
-}          "saveTemplate": "Save to Gallery",
+    "android": {
+      "package": "com.abo0maher007.sharefileapp",
+      "versionCode": 3,
+      "splash": {
+        "backgroundColor": "#0f172a"
+      },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CHANGE_WIFI_STATE",
+        "ACCESS_WIFI_STATE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow app to access media library",
+          "saveTemplate": "Save to Gallery",
           "isAccessMediaLocationEnabled": true
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "يحتاج التطبيق إذن الوصول للكاميرا لمسح رمز QR الخاص بالمستلم."
+          "cameraPermission": "Allow app to access camera to scan QR code"
         }
       ]
     ],
     "extra": {
       "eas": {
-        "projectId": "bdb8cd2a-f008-4fe4-900f-465de128d13f"
+        "projectId": "7184db86-fc09-4c0c-ae40-8032031fdfbb"
       }
     }
   }
-}    },
-    "plugins": [
-      [
+}
+EOF      [
         "expo-media-library",
         {
           "photosPermission": "يحتاج التطبيق إذن الوصول للمعرض لإرسال واستقبال الصور والفيديوهات.",
