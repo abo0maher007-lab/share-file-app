@@ -1,8 +1,7 @@
-{
-  "expo": {
-    "name": "SHAREit Clone",
+"expo": {
+    "name": "SHAREit Pro",
     "slug": "share-file-app",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -10,7 +9,7 @@
     },
     "android": {
       "package": "com.abo0maher007.sharefileapp",
-      "versionCode": 3,
+      "versionCode": 4,
       "splash": {
         "backgroundColor": "#0f172a"
       },
@@ -26,15 +25,30 @@
         "ACCESS_NETWORK_STATE"
       ]
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
     "plugins": [
       [
         "expo-media-library",
         {
           "photosPermission": "Allow app to access media library",
           "saveTemplate": "Save to Gallery",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow app to access camera to scan QR code"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7184db86-fc09-4c0c-ae40-8032031fdfbb"
+      }
+    }
+  }
+}
+EOF          "saveTemplate": "Save to Gallery",
           "isAccessMediaLocationEnabled": true
         }
       ],
