@@ -1,40 +1,474 @@
 import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Image, 
   FlatList,
-  Image,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
+  useColorScheme, 
   Alert,
-  ActivityIndicator,
-  I18nManager
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
-
-// المكتبات الأساسية
-import * as MediaLibrary from 'expo-media-library';
+import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import * as Network from 'expo-network';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import QRCode from 'react-native-qrcode-svg';
-import HttpBridge from 'react-native-http-bridge-refurbished';
-
-// دعم RTL للغة العربية
-I18nManager.forceRTL(true);
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 const { width } = Dimensions.get('window');
-const COLUMN_SIZE = width / 3 - 12;
-const PORT = 8080;
 
 export default function App() {
-  // حالة الشاشة الحالية: 'home' | 'receiver' | 'sender_scan' | 'transfer'
-  const [currentScreen, setCurrentScreen] = useState('home');
-  
-  // بيانات الوسائط والملفات المحددة
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const [currentScreen, setCurrentScreen] = useState('HOME'); // HOME, SELECT_FILES, SCAN_QR, RECEIVE_QR, TRANSFER
+  const [activeTab, setActiveTab] = useState('PHOTOS');
+
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
+  const [localIp, setLocalIp] = useState('192.168.43.1');
+  const [targetServerUrl, setTargetServerUrl] = useState('');
+
+  // Camera permissions
+  const [permission, requestCameraPermission] = useCameraPermissions();
+
+  // Real Transfer Network States
+  const [transferStats, setTransferStats] = useState({
+    totalBytes: 0,
+    transferredBytes: 0,
+    speedMBps: 0,
+    timeRemainingSec: 0,
+    currentFileIndex: 0,
+    isCompleted: false,
+    statusText: 'Connecting...'
+  });
+
+  const [fileProgressMap, setFileProgressMap] = useState({});
+
+  const theme = {
+    bg: isDark ? '#0f172a' : '#f8fafc',
+    card: isDark ? '#1e293b' : '#ffffff',
+    text: isDark ? '#f8fafc' : '#0f172a',
+    subText: isDark ? '#94a3b8' : '#64748b',
+    border: isDark ? '#334155' : '#e2e8f0',
+    primary: '#2563eb',
+    success: '#16a34a'
+  };
+
+  const getDeviceIp = async () => {
+    try {
+      const ip = await Network.getIpAddressAsync();
+      if (ip && ip !== '0.0.0.0') {
+        setLocalIp(ip);
+      }
+    } catch (e) {
+      console.log('Error getting IP:', e);
+    }
+  };
+
+  const requestMediaPermission = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status === 'granted') {
+      loadMedia();
+    } else {
+      Alert.alert('Permission Required', 'Gallery access is needed to select files.');
+    }
+  };
+
+  const loadMedia = async () => {
+    try {
+      const media = await MediaLibrary.getAssetsAsync({
+        first: 40,
+        mediaType: activeTab === 'VIDEOS' ? MediaLibrary.MediaType.video : MediaLibrary.MediaType.photo,
+      });
+      setGalleryPhotos(media.assets);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    getDeviceIp();
+    if (currentScreen === 'SELECT_FILES' && (activeTab === 'PHOTOS' || activeTab === 'VIDEOS')) {
+      requestMediaPermission();
+    }
+  }, [activeTab, currentScreen]);
+
+  const toggleSelectItem = (item) => {
+    const fileId = item.id || item.uri;
+    const exists = selectedItems.find(i => (i.id || i.uri) === fileId);
+    if (exists) {
+      setSelectedItems(selectedItems.filter(i => (i.id || i.uri) !== fileId));
+    } else {
+      const fileSize = item.fileSize || item.size || 2 * 1024 * 1024;
+      const formattedItem = {
+        id: fileId,
+        name: item.filename || item.name || `File_${selectedItems.length + 1}`,
+        size: fileSize,
+        uri: item.uri
+      };
+      setSelectedItems([...selectedItems, formattedItem]);
+    }
+  };
+
+  const pickCustomFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+      if (!result.canceled && result.assets) {
+        const formatted = result.assets.map((file, idx) => ({
+          id: file.uri + idx,
+          name: file.name,
+          size: file.size || 1024 * 1024,
+          uri: file.uri
+        }));
+        setSelectedItems([...selectedItems, ...formatted]);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick file.');
+    }
+  };
+
+  // Step 1: Open Camera Scanner after Selecting Files
+  const handleProceedToScan = async () => {
+    if (selectedItems.length === 0) {
+      Alert.alert('Notice', 'Please select at least one file.');
+      return;
+    }
+    if (!permission?.granted) {
+      const res = await requestCameraPermission();
+      if (!res.granted) {
+        Alert.alert('Camera Needed', 'Camera permission is required to scan receiver QR Code.');
+        return;
+      }
+    }
+    setCurrentScreen('SCAN_QR');
+  };
+
+  // Step 2: Handle QR Code Scanned Real IP & Endpoint
+  const handleBarcodeScanned = ({ data }) => {
+    if (data && data.startsWith('http')) {
+      setTargetServerUrl(data);
+      setCurrentScreen('TRANSFER');
+      startRealUploadStream(data);
+    } else {
+      Alert.alert('Invalid QR Code', 'Please scan a valid receiver QR Code.');
+    }
+  };
+
+  // Step 3: Real Stream Upload to Scanned Receiver URL
+  const startRealUploadStream = async (serverUrl) => {
+    const totalSize = selectedItems.reduce((acc, curr) => acc + curr.size, 0);
+    const initialProgress = {};
+    selectedItems.forEach(item => { initialProgress[item.id] = 0; });
+
+    setFileProgressMap(initialProgress);
+    let overallTransferred = 0;
+    const startTime = Date.now();
+
+    setTransferStats({
+      totalBytes: totalSize,
+      transferredBytes: 0,
+      speedMBps: 0,
+      timeRemainingSec: 0,
+      currentFileIndex: 0,
+      isCompleted: false,
+      statusText: `Uploading to ${serverUrl}...`
+    });
+
+    for (let i = 0; i < selectedItems.length; i++) {
+      const currentFile = selectedItems[i];
+      try {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: currentFile.uri,
+          name: currentFile.name,
+          type: 'application/octet-stream'
+        });
+
+        const response = await fetch(serverUrl, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (response.ok) {
+          overallTransferred += currentFile.size;
+          const elapsedTimeSec = (Date.now() - startTime) / 1000 || 1;
+          const calculatedSpeed = +((overallTransferred / (1024 * 1024)) / elapsedTimeSec).toFixed(1);
+          const remainingBytes = Math.max(0, totalSize - overallTransferred);
+          const remainingSec = calculatedSpeed > 0 ? Math.ceil((remainingBytes / (1024 * 1024)) / calculatedSpeed) : 0;
+
+          setFileProgressMap(prev => ({ ...prev, [currentFile.id]: 100 }));
+          setTransferStats({
+            totalBytes: totalSize,
+            transferredBytes: overallTransferred,
+            speedMBps: calculatedSpeed,
+            timeRemainingSec: remainingSec,
+            currentFileIndex: i,
+            isCompleted: i === selectedItems.length - 1,
+            statusText: i === selectedItems.length - 1 ? 'Transfer Completed!' : `Sending ${currentFile.name}...`
+          });
+        } else {
+          throw new Error('Upload failed');
+        }
+      } catch (err) {
+        Alert.alert('Transfer Error', `Failed to send ${currentFile.name}. Make sure receiver is on the same network.`);
+        break;
+      }
+    }
+  };
+
+  const formatMB = (bytes) => (bytes / (1024 * 1024)).toFixed(1);
+
+  // Home Screen
+  if (currentScreen === 'HOME') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <View style={styles.homeHeader}>
+          <Text style={[styles.logoText, { color: theme.text }]}>SHAREit Clone</Text>
+          <Text style={[styles.subLogoText, { color: theme.subText }]}>Real Wi-Fi P2P Transfer</Text>
+          <Text style={styles.versionBadge}>v1.2.0 - Real Camera Edition</Text>
+        </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={[styles.bigButton, { backgroundColor: theme.primary }]} onPress={() => setCurrentScreen('SELECT_FILES')}>
+            <Text style={styles.btnTextLarge}>SEND</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.bigButton, { backgroundColor: theme.success }]} onPress={() => setCurrentScreen('RECEIVE_QR')}>
+            <Text style={styles.btnTextLarge}>RECEIVE</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Camera QR Code Scanner Screen
+  if (currentScreen === 'SCAN_QR') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: '#000000' }]}>
+        <StatusBar style="light" />
+        <View style={styles.scannerHeader}>
+          <TouchableOpacity onPress={() => setCurrentScreen('SELECT_FILES')}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Scan Receiver QR</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          onBarcodeScanned={handleBarcodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr"],
+          }}
+        />
+
+        <View style={styles.overlayFrame}>
+          <View style={styles.scanBox} />
+          <Text style={styles.scanInstruction}>Point camera at the QR code on receiver's phone</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Receiver QR Screen
+  if (currentScreen === 'RECEIVE_QR') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>Receiver Endpoint Ready</Text>
+        <Text style={{ color: theme.subText, marginBottom: 12 }}>Wi-Fi IP Address: {localIp}</Text>
+
+        <View style={styles.qrContainer}>
+          <QRCode value={`http://${localIp}:8080/upload`} size={220} />
+        </View>
+
+        <TouchableOpacity style={styles.cancelBtn} onPress={() => setCurrentScreen('HOME')}>
+          <Text style={styles.cancelBtnText}>Close Receiver</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  // File Picker Screen
+  if (currentScreen === 'SELECT_FILES') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bg, paddingHorizontal: 0 }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <View style={[styles.topBar, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+          <TouchableOpacity onPress={() => setCurrentScreen('HOME')}>
+            <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={[styles.topTitle, { color: theme.text }]}>Select Files</Text>
+          <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{selectedItems.length} Selected</Text>
+        </View>
+
+        <View style={[styles.tabBar, { backgroundColor: theme.card }]}>
+          {['PHOTOS', 'VIDEOS', 'DOCUMENTS'].map((tab) => (
+            <TouchableOpacity key={tab} style={[styles.tabItem, activeTab === tab && styles.activeTabItem]} onPress={() => setActiveTab(tab)}>
+              <Text style={[styles.tabText, activeTab === tab ? { color: theme.primary } : { color: theme.subText }]}>{tab}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={{ flex: 1, padding: 8 }}>
+          {activeTab === 'PHOTOS' || activeTab === 'VIDEOS' ? (
+            <FlatList
+              data={galleryPhotos}
+              numColumns={3}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                const isSelected = selectedItems.some(i => i.id === item.id);
+                return (
+                  <TouchableOpacity style={styles.gridItem} onPress={() => toggleSelectItem(item)}>
+                    <Image source={{ uri: item.uri }} style={styles.gridImage} />
+                    {isSelected && <View style={styles.selectedOverlay}><Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text></View>}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          ) : (
+            <View style={styles.centerContainer}>
+              <Text style={{ color: theme.text, marginBottom: 15 }}>Pick any file type from local storage</Text>
+              <TouchableOpacity style={styles.browseBtn} onPress={pickCustomFile}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Browse Storage</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {selectedItems.length > 0 && (
+          <View style={[styles.bottomBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+            <View>
+              <Text style={{ color: theme.text, fontWeight: 'bold' }}>{selectedItems.length} Item(s)</Text>
+              <Text style={{ color: theme.subText, fontSize: 12 }}>Total: {formatMB(selectedItems.reduce((a, b) => a + b.size, 0))} MB</Text>
+            </View>
+            <TouchableOpacity style={styles.sendSubmitBtn} onPress={handleProceedToScan}>
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>SCAN & SEND</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    );
+  }
+
+  // Transfer Screen
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <StatusBar style="light" />
+      <View style={styles.transferHeaderCard}>
+        <Text style={styles.transferTitle}>{transferStats.statusText}</Text>
+        
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{transferStats.speedMBps} <Text style={styles.unitText}>MB/s</Text></Text>
+            <Text style={styles.statLabel}>Real Speed</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{transferStats.timeRemainingSec} <Text style={styles.unitText}>s</Text></Text>
+            <Text style={styles.statLabel}>Remaining</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{formatMB(transferStats.transferredBytes)} / {formatMB(transferStats.totalBytes)}</Text>
+            <Text style={styles.statLabel}>MB Sent</Text>
+          </View>
+        </View>
+
+        <View style={styles.globalProgressTrack}>
+          <View style={[styles.globalProgressFill, { width: `${Math.min(100, (transferStats.transferredBytes / (transferStats.totalBytes || 1)) * 100)}%` }]} />
+        </View>
+      </View>
+
+      <View style={{ flex: 1, paddingHorizontal: 15, marginTop: 15 }}>
+        <Text style={{ color: theme.text, fontWeight: 'bold', marginBottom: 10, fontSize: 16 }}>Sending Queue ({selectedItems.length})</Text>
+        <FlatList
+          data={selectedItems}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => {
+            const prog = fileProgressMap[item.id] || 0;
+            const isCurrent = index === transferStats.currentFileIndex && !transferStats.isCompleted;
+
+            return (
+              <View style={[styles.queueCard, { backgroundColor: theme.card, borderColor: isCurrent ? theme.primary : theme.border }]}>
+                <View style={styles.queueHeader}>
+                  <Text style={[styles.fileNameText, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
+                  <Text style={{ color: prog === 100 ? theme.success : theme.subText, fontWeight: 'bold' }}>
+                    {prog === 100 ? '✓ Sent' : `${prog}%`}
+                  </Text>
+                </View>
+                <Text style={{ color: theme.subText, fontSize: 12, marginBottom: 6 }}>Size: {formatMB(item.size)} MB</Text>
+                <View style={styles.queueProgressTrack}>
+                  <View style={[styles.queueProgressFill, { width: `${prog}%`, backgroundColor: prog === 100 ? theme.success : theme.primary }]} />
+                </View>
+              </View>
+            );
+          }}
+        />
+      </View>
+
+      <View style={{ padding: 15 }}>
+        <TouchableOpacity style={[styles.finishBtn, { backgroundColor: transferStats.isCompleted ? theme.success : '#ef4444' }]} onPress={() => { setSelectedItems([]); setCurrentScreen('HOME'); }}>
+          <Text style={styles.finishBtnText}>{transferStats.isCompleted ? 'Done & Return Home' : 'Cancel Transfer'}</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingTop: 30 },
+  homeHeader: { alignItems: 'center', marginTop: 40 },
+  logoText: { fontSize: 32, fontWeight: 'bold' },
+  subLogoText: { fontSize: 14, marginTop: 4 },
+  versionBadge: { fontSize: 12, fontWeight: 'bold', color: '#0284c7', marginTop: 8 },
+  actionRow: { paddingHorizontal: 30, marginTop: 60, gap: 20 },
+  bigButton: { paddingVertical: 20, borderRadius: 16, alignItems: 'center', elevation: 2 },
+  btnTextLarge: { color: '#ffffff', fontSize: 20, fontWeight: 'bold', letterSpacing: 1 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold' },
+  qrContainer: { padding: 20, backgroundColor: '#ffffff', borderRadius: 16, elevation: 4 },
+  cancelBtn: { marginTop: 35, paddingVertical: 12, paddingHorizontal: 30, backgroundColor: '#ef4444', borderRadius: 10 },
+  cancelBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
+  topTitle: { fontSize: 18, fontWeight: 'bold' },
+  tabBar: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 },
+  tabItem: { paddingVertical: 6, paddingHorizontal: 16 },
+  activeTabItem: { borderBottomWidth: 3, borderBottomColor: '#2563eb' },
+  tabText: { fontSize: 14, fontWeight: 'bold' },
+  gridItem: { width: width / 3 - 8, height: width / 3 - 8, margin: 4, position: 'relative' },
+  gridImage: { width: '100%', height: '100%', borderRadius: 8 },
+  selectedOverlay: { position: 'absolute', top: 6, right: 6, backgroundColor: '#2563eb', borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  browseBtn: { backgroundColor: '#0284c7', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
+  bottomBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderTopWidth: 1 },
+  sendSubmitBtn: { backgroundColor: '#2563eb', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 10 },
+  transferHeaderCard: { backgroundColor: '#1e293b', padding: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+  transferTitle: { color: '#ffffff', fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 15 },
+  statBox: { alignItems: 'center' },
+  statValue: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+  unitText: { fontSize: 12, color: '#94a3b8' },
+  statLabel: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
+  statDivider: { width: 1, height: 25, backgroundColor: '#334155' },
+  globalProgressTrack: { width: '100%', height: 8, backgroundColor: '#334155', borderRadius: 4, overflow: 'hidden' },
+  globalProgressFill: { height: '100%', backgroundColor: '#2563eb' },
+  queueCard: { padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 10 },
+  queueHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  fileNameText: { fontWeight: 'bold', fontSize: 14, flex: 1, marginRight: 10 },
+  queueProgressTrack: { width: '100%', height: 6, backgroundColor: '#334155', borderRadius: 3, overflow: 'hidd  // بيانات الوسائط والملفات المحددة
   const [activeTab, setActiveTab] = useState('photos');
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
