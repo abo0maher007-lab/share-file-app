@@ -1,11 +1,40 @@
+# Dependencies
 node_modules/
+
+# Expo & Metro
 .expo/
 dist/
+web-build/
+
+# Native folders (إذا كنت تستخدم CNG / Prebuild عبر expo run:android)
+android/
+ios/
+
+# Build Outputs & Binaries (حزم التطبيق الناتجة محلياً)
+*.apk
+*.aab
+*.ipa
+*.xarchive
+
+# Logs
 npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Keys, Certificates & Credentials
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.keystore
+*.pem
+.env
+.env.*
+
+# System & Editor files
+.DS_Store
+.idea/
+.vscode/
 *.orig.*
-web-build/
+coverage/
