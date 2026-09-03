@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "ShareIt Clone",
-    "slug": "shareit-clone",
+    "name": "SecureP2PTransfer",
+    "slug": "secure-p2p-transfer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a73e8"
+      "backgroundColor": "#121212"
     },
     "ios": {
       "supportsTablet": true
@@ -17,34 +17,20 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a73e8"
+        "backgroundColor": "#121212"
       },
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_WIFI_STATE",
-        "CHANGE_WIFI_STATE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+      "package": "com.anonymous.securep2ptransfer"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
-  }
-}
-      ],
+    "plugins": [
+      "./plugins/withAndroidPermissions",
       [
-        "expo-camera",
+        "react-native-ble-plx",
         {
-          "cameraPermission": "Allow app to access camera to scan QR code"
+          "isBackgroundEnabled": false,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "تطلب التطبيق الوصول للبلوتوث لاكتشاف الأجهزة القريبة."
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "7184db86-fc09-4c0c-ae40-8032031fdfbb"
-      }
-    }
+    ]
   }
 }
-EOF
