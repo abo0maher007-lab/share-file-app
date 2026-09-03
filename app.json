@@ -1,39 +1,37 @@
-"expo": {
-    "name": "SHAREit Native Pro",
-    "slug": "share-file-app",
-    "version": "2.0.0",
+{
+  "expo": {
+    "name": "ShareIt Clone",
+    "slug": "shareit-clone",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#0f172a"
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a73e8"
+    },
+    "ios": {
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.abo0maher007.sharefileapp",
-      "versionCode": 5,
-      "splash": {
-        "backgroundColor": "#0f172a"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a73e8"
       },
       "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CHANGE_WIFI_STATE",
         "ACCESS_WIFI_STATE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "NEARBY_WIFI_DEVICES"
+        "CHANGE_WIFI_STATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
-    "plugins": [
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "Allow app to access media library",
-          "saveTemplate": "Save to Gallery",
-          "isAccessMediaLocationEnabled": true
-        }
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
       ],
       [
         "expo-camera",
