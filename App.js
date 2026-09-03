@@ -1,39 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  Image, 
-  FlatList,
-  useColorScheme, 
-  Alert,
-  Dimensions,
-  SafeAreaView,
-  Animated,
-  Easing
-} from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import * as DocumentPicker from 'expo-document-picker';
-import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
-import * as Network from 'expo-network';
-import QRCode from 'react-native-qrcode-svg';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-
-import httpBridge from 'react-native-http-bridge-refactored';
-import WifiManager from 'react-native-wifi-reborn';
-
-const { width } = Dimensions.get('window');
+import SendScreen from './src/screens/SendScreen';
+import ReceiveScreen from './src/screens/ReceiveScreen';
 
 export default function App() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const [mode, setMode] = useState('home'); // 'home' | 'send' | 'receive'
 
-  const [currentScreen, setCurrentScreen] = useState('HOME');
-  const [activeTab, setActiveTab] = useState('PHOTOS');
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="auto" />
+      
+      {mode === 'home' && (
+        <View style={styles.homeContainer}>
+          <Text style={styles.appTitle}>ShareIt Clone P2P</Text>
+          <Text style={styles.subtitle}>نقل ملفات سريع عبر الشبكة المحلية بدون إنترنت</Text>
 
-  const [selectedItems, setSelectedItems] = useState([]);
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity style={[styles.card, styles.sendCard]} onPress={() => setMode('send')}>
+              <Text style={styles.cardText}>إرسال (Send)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.card, styles.receiveCard]} onPress={() => setMode('receive')}>
+              <Text style={styles.cardText}>استلام (Receive)</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {mode === 'send' && <SendScreen onBack={() => setMode('home')} />}
+      {mode === 'receive' && <ReceiveScreen onBack={() => setMode('home')} />}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.compile({
+  container: { flex: 1, backgroundColor: '#fff' },
+  homeContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  appTitle: { fontSize: 28, fontWeight: 'bold', color: '#1a73e8', marginBottom: 10 },
+  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 40 },
+  actionsContainer: { width: '100%', gap: 20, alignItems: 'center' },
+  card: { width: '80%', padding: 25, borderRadius: 15, alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  sendCard: { backgroundColor: '#1a73e8' },
+  receiveCard: { backgroundColor: '#34a853' },
+  cardText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+});
   const [galleryPhotos, setGalleryPhotos] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [localIp, setLocalIp] = useState('192.168.43.1');
