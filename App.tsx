@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SendScreen } from './src/screens/SendScreen';
+import { ReceiveScreen } from './src/screens/ReceiveScreen'; // 1. استيراد شاشة الاستلام
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +22,7 @@ export default function App() {
       >
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'الرئيسية' }} />
         <Stack.Screen name="Send" component={SendScreen} options={{ title: 'إرسال ملف' }} />
+        <Stack.Screen name="Receive" component={ReceiveScreen} options={{ title: 'استلام ملف' }} /> {/* 2. تسجيل شاشة الاستلام */}
       </Stack.Navigator>
     </NavigationContainer>
   );
